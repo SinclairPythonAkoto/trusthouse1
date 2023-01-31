@@ -15,7 +15,6 @@ from trusthouse.utils import (
     create_new_review, 
     error_message, ok_message, warning_message
     )
-from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 load_dotenv()
 
