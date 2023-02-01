@@ -26,7 +26,8 @@ PORT = os.environ['API_PORT']
 def api_home():
     manual = {
         'APP': 'TrustHouse API',
-        'DESCRIPTION': 'This will be the manual or instructions on how to use the API.'
+        'DESCRIPTION': 'This will be the manual or instructions on how to use the API.',
+        'STATUS': ok_message()[3]
     }
     return jsonify(manual)
 
