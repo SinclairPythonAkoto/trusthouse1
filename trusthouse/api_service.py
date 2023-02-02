@@ -14,6 +14,9 @@ from trusthouse.utils import (
     validate_location_request,
     get_postcode_coordinates,
     warning_message,
+    create_new_address,
+    create_new_buisness,
+    create_new_map,
 ) 
 from flask import jsonify
 from dotenv import load_dotenv
@@ -487,6 +490,74 @@ def create_new_address_api(
                 void: str = 'Error'
                 data: Dict = {void:message}
                 return jsonify(data)
+
+
+# add new buisness API
+@app.route('/api/new/business/<buisness_name>,<category>,<contact>,<door_num>,<streetname>,<location>,<postcode>')
+def create_new_buisness_api(
+    buisness_name, 
+    category, 
+    contact, 
+    door_num, 
+    streetname, 
+    location, 
+    postcode
+) -> Dict:
+    name: str = buisness_name
+    category: str = category
+    contact: str = contact
+    door_num: str = door_num
+    streetname: str = streetname
+    location: str = location
+    postcode: str = postcode
+
+    # check if the business name & address already exists
+    check_postcode: bool = validate_postcode_request(postcode)
+
+    if check_postcode == False:
+        # if there is no coordinates do send error message
+        user_postcode_coordinates: List[Dict] = get_postcode_coordinates(postcode)
+        if user_postcode_coordinates  == []:
+            message: List[Dict] = error_message()[3]
+            data = {
+                'Error': message
+            }
+            return jsonify(data)
+        elif user_postcode_coordinates:
+            new_address: Address() = create_new_address(
+                door_num.lower(),
+                streetname.lower(),
+                location.lower(),
+                postcode.lower(),
+            )
+            latitude: List[Dict] = user_postcode_coordinates[0].get('lat')
+            longitude: List[Dict] = user_postcode_coordinates[0].get('lon')
+            create_new_map(longitude, latitude, new_address)
+            create_new_buisness(
+                name.lower(),
+                category.lower(),
+                contact.lower(),
+                new_address,
+            )
+    data: List[Dict] = {
+        'Successful upload': ok_message()[4],
+        'Status': ok_message()[3],
+        'New Upload': {
+            'Business Name': name.lower(),
+            'Business Category': category.lower(),
+            'Contact': contact.lower(),
+            'Business Address': {
+                'Door Number': door_num.lower(),
+                'Street': streetname.lower(),
+                'Location': location.lower(),
+                'Postcode': postcode.lower(),
+            },
+        },
+    }
+    return jsonify(data)
+
+
+
 
 
 if __name__ == '__main__':
