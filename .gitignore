@@ -1,0 +1,4 @@
+/venv
+/trusthouse/.env
+/trusthoue.db
+/trusthouse.egg-info
