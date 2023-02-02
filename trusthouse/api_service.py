@@ -1,6 +1,7 @@
 import os
 import requests
 from typing import List, Dict
+from datetime import datetime
 from trusthouse import app
 from trusthouse.extensions import init_db, SessionLocal
 from trusthouse.models import Address, Reviews
@@ -17,6 +18,7 @@ from trusthouse.utils import (
     create_new_address,
     create_new_buisness,
     create_new_map,
+    new_incident,
 ) 
 from flask import jsonify
 from dotenv import load_dotenv
@@ -557,7 +559,61 @@ def create_new_buisness_api(
     return jsonify(data)
 
 
+# add new incident API 
+@app.route('/api/report/<category>,<description>,<door_num>,<streetname>,<location>,<postcode>')
+def add_new_incident_api(
+    category, 
+    description, 
+    door_num, 
+    streetname, 
+    location, 
+    postcode
+) -> Dict:
+    incident: str = category
+    description: str = description
+    door_num: str = door_num
+    streetname: str = streetname
+    location: str = location 
+    postcode: str = postcode
 
+     # valiate the postcode
+    check_postcode: bool = validate_postcode_request(postcode)
+
+    if check_postcode == False:
+        user_postcode_coordinates: List[Dict] = get_postcode_coordinates(postcode)
+        if user_postcode_coordinates == []:
+            message: str = error_message()[4]
+            data: Dict = {
+                'Error': message
+            }
+            return jsonify(data)
+        elif user_postcode_coordinates:
+            new_address: Address = create_new_address(
+                door_num.lower(),
+                streetname.lower(),
+                location.lower(),
+                postcode.lower(),
+            )
+            latitude: List[Dict] = user_postcode_coordinates[0].get('lat')
+            longitude: List[Dict] = user_postcode_coordinates[0].get('lon')
+            create_new_map(longitude, latitude, new_address)
+            new_incident(incident, description, new_address)
+    data: Dict = {
+    'Successful upload': ok_message()[4],
+        'Status': ok_message()[3],
+        'New Incident': {
+            'Incident': category.lower(),
+            'Description': description.lower(),
+            'Date': datetime.now(),
+            'Incident Address': {
+                'Door Number': door_num.lower(),
+                'Street': streetname.lower(),
+                'Location': location.lower(),
+                'Postcode': postcode.lower(),
+            },
+        } 
+    }
+    return jsonify(data)
 
 
 if __name__ == '__main__':
