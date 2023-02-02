@@ -1,4 +1,5 @@
 import os
+import requests
 from typing import List, Dict
 from trusthouse import app
 from trusthouse.extensions import init_db, SessionLocal
@@ -11,6 +12,8 @@ from trusthouse.utils import (
     validate_postcode_request,
     validate_rating_request,
     validate_location_request,
+    get_postcode_coordinates,
+    warning_message,
 ) 
 from flask import jsonify
 from dotenv import load_dotenv
@@ -296,7 +299,7 @@ def filter_tenants_api() -> Dict:
 
 
 # disply reviews by neighbour API
-@app.route('/api/neighbours')
+@app.route('/api/neighbours', methods=['POST'])
 def filter_neighbour_api() -> Dict:
     session: SessionLocal = SessionLocal()
     check_neighbour: Reviews = session.query(Reviews).filter_by(type='neighbour').first()
@@ -407,6 +410,83 @@ def filter_location_api(location: str) -> Dict:
     }
     return jsonify(data)
 
+@app.route('/debug')
+def debug():
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append(str(rule))
+    return '\n'.join(routes)
+
+
+# add new address API
+@app.route('/api/new/address/<address_door>,<address_street>,<address_location>,<address_postcode>')
+def create_new_address_api(
+    address_door, address_street, address_location, address_postcode
+) -> Dict:
+    session: SessionLocal = SessionLocal()
+    door: str = address_door
+    street_name: str = address_street
+    town_or_city: str = address_location
+    postcode: str = address_postcode
+
+    # check if address already exists via the door number & postcode
+    get_door_num: List[Address] = session.query(Address).filter_by(door_num=door).all()
+    get_postcode: List[Address] = session.query(Address).filter_by(postcode=postcode).all()
+    
+    # get coordinates from postcode
+    user_postcode_cordinates: List[Dict] = get_postcode_coordinates(postcode)
+
+    # if the list is empty then the new address does NOT already exist
+    if len(get_postcode) == 0:
+        new_address: Address = Address(
+            door_num=door.lower(),
+            street=street_name.lower(),
+            location=town_or_city.lower(),
+            postcode=postcode.lower(),
+        )
+        session.add(new_address)
+        session.commit()
+
+        # if no coordinates found
+        if user_postcode_cordinates is None:
+            warning: Dict = {
+                'Incomplete upload': warning_message()[0],
+                'Status': warning_message()[1]
+            }
+            return jsonify(warning)
+        # if coordinates found from postcode
+        elif user_postcode_cordinates != None:
+            success: Dict = {
+                'Successful upload': ok_message()[0],
+                'Status': ok_message()[2],
+            }
+            return jsonify(success)
+    # if there is an existing postcode
+    else:
+        # if the door number does not match
+        if not get_door_num and postcode == get_postcode[0].postcode:
+            new_address: Address = Address(
+                door_num=door.lower(),
+                street=street_name.lower(),
+                location=town_or_city.lower(),
+                postcode=postcode.lower(),
+            )
+            session.add(new_address)
+            session.commit()
+           
+            if user_postcode_cordinates != None:
+                success = {
+                    'Add new address': ok_message()[0]['Success'],
+                    'Status': ok_message()[3]
+                }
+                return jsonify(success)
+        else:
+            # if the address already exists 
+            if door == get_door_num[0].door_num and postcode == get_postcode[0].postcode:
+                message: str = 'This address is already in the system.'
+                void: str = 'Error'
+                data: Dict = {void:message}
+                return jsonify(data)
 
 
 if __name__ == '__main__':
