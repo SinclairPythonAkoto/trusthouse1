@@ -21,6 +21,7 @@ class Reviews(Base):
     review = Column(Text, nullable=False)
     type = Column(String(20), nullable=False)
     date = Column(DateTime, nullable=False)
+    file_path = Column(String(255))
     address_id = Column(Integer, ForeignKey('address.id'))
 
 class Maps(Base):
