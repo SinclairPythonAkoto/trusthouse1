@@ -49,7 +49,7 @@ def api_home() -> Dict:
     return jsonify(manual)
 
 # display all address API
-@app.route('/api/display/addresses')
+@app.route('/api/address')
 def display_address_api() -> Dict:
     session: SessionLocal = SessionLocal()
     check_address: Reviews = session.query(Address).first()
@@ -75,7 +75,7 @@ def display_address_api() -> Dict:
 
 
 # display all reviews API
-@app.route('/api/display/reviews')
+@app.route('/api/reviews')
 def display_reviews_api() -> Dict:
     session: SessionLocal = SessionLocal()
     check_review: Reviews = session.query(Reviews).first()
@@ -304,7 +304,7 @@ def filter_tenants_api() -> Dict:
 
 
 # disply reviews by neighbour API
-@app.route('/api/neighbours', methods=['POST'])
+@app.route('/api/neighbours')
 def filter_neighbour_api() -> Dict:
     session: SessionLocal = SessionLocal()
     check_neighbour: Reviews = session.query(Reviews).filter_by(type='neighbour').first()
@@ -314,7 +314,7 @@ def filter_neighbour_api() -> Dict:
             'Status': error_message()[2],
         }
         return jsonify(void)
-    all_reviews: List[Reviews] = session.query(Reviews).filer_by(type='neighbour').all()
+    all_reviews: List[Reviews] = session.query(Reviews).filter_by(type='neighbour').all()
     neighbour_results: List[Dict] = []
     for review in all_reviews:
         result = {
@@ -342,7 +342,7 @@ def filter_neighbour_api() -> Dict:
 
 
 # display reviews by visitor API
-@app.route('/api/vistors')
+@app.route('/api/visitors')
 def filter_vistor_api() -> Dict:
     session: SessionLocal = SessionLocal()
     check_vistor: Reviews = session.query(Reviews).filter_by(type='vistor').first()

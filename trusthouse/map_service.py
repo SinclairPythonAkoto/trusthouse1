@@ -1,5 +1,6 @@
 import os
 import folium
+from typing import List, Dict, Tuple
 from trusthouse import app
 from trusthouse.extensions import init_db, SessionLocal
 from flask import render_template, request
@@ -16,31 +17,31 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 # config your host & port for app using environment variable
-HOST = os.environ['HOST']
-PORT = os.environ['MAP_SERVICE_PORT']
+HOST: str = os.environ['HOST']
+PORT: int = os.environ['MAP_SERVICE_PORT']
 
 
 # create routes
 @app.route('/map')
 def trusthouse_map():
-    coordinates = Maps.query.all()
-    business_data = Business.query.all()
-    incident_reports = Incident.query.all()
-    longitude = '-0.1244477'
-    latitude = '51.4994252'
-    location = float(latitude), float(longitude)
-    map = folium.Map(
+    coordinates: Maps = Maps.query.all()
+    business_data: Business = Business.query.all()
+    incident_reports: Incident = Incident.query.all()
+    longitude: str = '-0.1244477'
+    latitude: str = '51.4994252'
+    location: Tuple = float(latitude), float(longitude)
+    map: folium = folium.Map(
         location=location,
         tiles='Stamen Terrain',
         zoom_start=9,
     )
-    geolocator = Nominatim(user_agent='geoapiExercises')
+    geolocator: Nominatim = Nominatim(user_agent='geoapiExercises')
     for geocode in coordinates:
         long = geocode.lon
         lat = geocode.lat
         # get street name from latitude & longitude
-        street_location = geolocator.reverse(f'{lat},{long}')
-        street_location = str(street_location)
+        street_location: str = geolocator.reverse(f'{lat},{long}')
+        street_location: str = str(street_location)
         data = street_location.split(',')
 
         # adding the points to the map

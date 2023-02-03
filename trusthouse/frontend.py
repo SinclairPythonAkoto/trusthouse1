@@ -4,12 +4,12 @@ from flask import Flask, render_template
 load_dotenv()
 
 
-front_app = Flask(__name__)
+front_app: Flask = Flask(__name__)
 
 
 # config your host & port for app using environment variables
-HOST = os.environ['HOST']
-PORT = os.environ['FRONTEND_PORT']
+HOST: str = os.environ['HOST']
+PORT: int = os.environ['FRONTEND_PORT']
 
 
 # define all routes
