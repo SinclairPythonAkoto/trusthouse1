@@ -2,7 +2,7 @@ import os
 from typing import List, Dict
 from trusthouse import app
 from trusthouse.extensions import init_db, SessionLocal
-from flask import render_template, request
+from flask import render_template, request, jsonify
 from trusthouse.models import Reviews, Address
 from trusthouse.utils import (
     validate_door_request,
@@ -193,6 +193,55 @@ def find_by_postcode():
         user_postcode_request=user_postcode_request,
         filter_postcode=filter_postcode,
     )
+
+# create new address
+@app.route('/new-address', methods=['POST'])
+def create_address():
+    door: str = request.form['doorNum']
+    street_name: str= request.form['streetName']
+    location: str = request.form['addressLocation']
+    postcode: str = request.form['addressPostcode']
+
+    # use the validation functions to check if door & postcode match or not 
+    door_request: bool = validate_door_request(door)
+    postcode_request: bool = validate_postcode_request(postcode)
+    # if there is no preexisting postcode create new address.
+    if postcode_request == False:
+        # write fuction
+        new_address: Address = create_new_address(door, street_name, location, postcode)
+        # write fuction
+        user_postcode_coordinates: List[Dict] = get_postcode_coordinates(postcode)
+        # write fuction
+        if user_postcode_coordinates == []:
+            # write fuction
+            data: Dict = {
+                'Incomplete upload': warning_message()[0], 
+                'Status':warning_message()[2]
+            }
+            return jsonify(data)
+        elif user_postcode_coordinates:
+            latitude: List[Dict] = user_postcode_coordinates[0].get('lat')
+            longitude: List[Dict] = user_postcode_coordinates[0].get('lon')
+            create_new_map(longitude, latitude, new_address)
+            message: List[str] = ok_message()[0]['Success']
+            return render_template('newAddress.html', message=message)
+        else:
+            data: Dict = {
+                'Unexpected error': error_message()[0],
+                'status': error_message()[2], 
+            }
+            return jsonify(data)
+    else:
+        if door_request == False and postcode_request == True:
+            new_address: Address = create_new_address(door, street_name, location, postcode)
+            user_postcode_coordinates: List[Dict] = get_postcode_coordinates(postcode)
+            # if there is an existing latitude & longitude
+            if user_postcode_coordinates:
+                latitude: List[Dict] = user_postcode_coordinates[0].get('lat')
+                longitude: List[Dict] = user_postcode_coordinates[0].get('lon')
+                create_new_map(longitude, latitude, new_address)
+                message: List[str] = ok_message()[0]['Success']
+                return render_template('newAddress.html', message=message)
 
 
 
