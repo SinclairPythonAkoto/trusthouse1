@@ -1,5 +1,4 @@
 import requests
-from typing import List, Dict, Tuple
 from trusthouse import app
 from .extensions import SessionLocal
 from trusthouse.models import *
@@ -110,7 +109,7 @@ def create_new_review(rating, review, review_type, address) -> Reviews:
 
 
 
-def get_postcode_coordinates(postcode) -> List[Dict]:
+def get_postcode_coordinates(postcode) -> list(dict):
     """
     Takes the user's postcode request and uses the OpenStreetMap API to get the latitude * longitude.
     Returns a JSON object or empyty list if there is no match from the response.
@@ -118,12 +117,12 @@ def get_postcode_coordinates(postcode) -> List[Dict]:
     BASE_URL: str = 'https://nominatim.openstreetmap.org/search?format=json'
 
     response: requests = requests.get(f"{BASE_URL}&postalcode={postcode}&country=united kingdom")
-    data: List[Dict] = response.json()
+    data: list[dict] = response.json()
     return data
 
 
 
-def warning_message() -> Tuple(Dict):
+def warning_message() -> tuple(dict):
     """
     Returns a warning message if not the longitude & latitude has not been saved into the Maps table.
     Used for backend API and for user front end.
@@ -138,15 +137,15 @@ def warning_message() -> Tuple(Dict):
     
     Returns a tuple of dictionaries with the warning message and status.
     """
-    warning: Dict = {
+    warning: dict = {
         'Warning': 'Your address has been uploaded to Trust House, but the coordinates to your postcode could not be saved.'
     }
-    status: Dict = {'status': 199}
+    status: dict = {'status': 199}
     return warning, status
 
 
 
-def error_message() -> Tuple(Dict):
+def error_message() -> tuple(dict):
     """
     Returns an error message if unable to get the request.
     Used for backend API and for user front end messages.
@@ -164,18 +163,18 @@ def error_message() -> Tuple(Dict):
 
     Returns a tuple of dictionaries with the error message and status.
     """
-    error: Dict = {
+    error: dict = {
         'Error': 'Could not make your request. Please check and try again.'
     }
-    no_match: Dict = {'Error': 'No match found. Please check and try again.'}
-    status: Dict = {'status': 400}
-    business_error: Dict = {'Error': 'Your listing could not be uploaded. We could not locate the co-ordinates of the postcode given.'}
-    incident_error: Dict = {'Error': 'Your incident could not be uploaded. We could not locat ethe co-ordinates of the postcode.'}
+    no_match: dict = {'Error': 'No match found. Please check and try again.'}
+    status: dict = {'status': 400}
+    business_error: dict = {'Error': 'Your listing could not be uploaded. We could not locate the co-ordinates of the postcode given.'}
+    incident_error: dict = {'Error': 'Your incident could not be uploaded. We could not locat ethe co-ordinates of the postcode.'}
     return error, no_match, status, business_error, incident_error
 
 
 
-def ok_message() -> Tuple(Dict):
+def ok_message() -> tuple(dict):
     """
     Returns a message to let the user the request went through.
     Used for backend API and front end messages.
@@ -193,15 +192,15 @@ def ok_message() -> Tuple(Dict):
 
     returns a tuple of dictionaries with OK messages and the status.
     """
-    good_address: Dict = {
+    good_address: dict = {
         'Success': 'Your address has been uploaded to Trust House.'
     }
-    good_review: Dict = {
+    good_review: dict = {
         'Success': 'Your review has been successfully uploaded to Trust House.'
     }
-    match_found: Dict = {'Success': 'A match was found!'}
+    match_found: dict = {'Success': 'A match was found!'}
     status = {'status': 201}
-    good_buisness: Dict = {'Success': 'Your business has been successfully uploaded to Trust House.'}
+    good_buisness: dict = {'Success': 'Your business has been successfully uploaded to Trust House.'}
     return good_address, good_review, match_found, status, good_buisness
 
 
@@ -294,3 +293,10 @@ def validate_street_request(street) -> bool:
             session.query(Address).filter_by(street=street).exists()
         ).scalar()
     return response
+
+
+
+def allowed_file(filename: str) -> str:
+    ALLOWED_EXTENSIONS: dict = {'png', 'jpg', 'jpeg', 'gif'}     # specify allowed file extensions
+    return '.' in filename and \
+        filename.rsplit(',', 0)[1].lower() in ALLOWED_EXTENSIONS

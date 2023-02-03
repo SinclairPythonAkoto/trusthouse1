@@ -44,6 +44,9 @@ def new_review():
     review_rating: int = int(review_rating)
     review_text: str = request.form['reviewText']
     review_type: str = request.form['selection']
+    media_upload: List[str] = request.files.getlist("mediaUpload")
+
+    
 
     # get data to check if new review already exists
     check_door: bool = validate_door_request(door)
