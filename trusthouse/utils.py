@@ -1,5 +1,7 @@
+import os
 import requests
 from trusthouse import app
+from flask import secure_filename
 from .extensions import SessionLocal
 from trusthouse.models import *
 from datetime import datetime
@@ -106,6 +108,41 @@ def create_new_review(rating, review, review_type, address) -> Reviews:
         session.add(new_review_entry)
         session.commit()
     return new_review_entry
+
+
+
+def allowed_file(filename: str) -> str:
+    """
+    Checks to see if the file extensions are correct.
+    """
+    ALLOWED_EXTENSIONS: dict = {'png', 'jpg', 'jpeg', 'gif'}     # specify allowed file extensions
+    return '.' in filename and \
+        filename.rsplit(',', 0)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def upload_media_review(media: list(str), address, review) -> Uploads:
+    """
+    Takes the list object of media files and creates a path for each one,
+    Checks the file extension and saves the path in the Uploads table.
+    Each media upload is linked to the Address id & Review id.
+    Returns the Uploads object after saving it.
+    """
+    with app.app_context():
+        session: SessionLocal = SessionLocal()
+        for file in media:
+            # check if the file extention is valid
+            if file and allowed_file(file.filename):
+                filename: str = secure_filename(file.filename)
+                file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                new_media_entry: Uploads = Uploads(
+                    media_file=file_path,
+                    locate=address,
+                    imgs=review
+                )
+                session.add(new_media_entry)
+                session.commit()
+    return new_media_entry
 
 
 
@@ -296,7 +333,3 @@ def validate_street_request(street) -> bool:
 
 
 
-def allowed_file(filename: str) -> str:
-    ALLOWED_EXTENSIONS: dict = {'png', 'jpg', 'jpeg', 'gif'}     # specify allowed file extensions
-    return '.' in filename and \
-        filename.rsplit(',', 0)[1].lower() in ALLOWED_EXTENSIONS

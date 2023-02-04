@@ -13,6 +13,7 @@ class Address(Base):
     reviews = relationship('Reviews', backref='address')
     buisnesses = relationship('Business', backref='place')
     incident = relationship('Incident', backref='area')
+    media = relationship('Uploads', backref='locate')
 
 class Reviews(Base):
     __tablename__ = 'reviews'
@@ -22,6 +23,14 @@ class Reviews(Base):
     type = Column(String(20), nullable=False)
     date = Column(DateTime, nullable=False)
     file_path = Column(String(255))
+    address_id = Column(Integer, ForeignKey('address.id'))
+    upload_media = relationship('Uploads', backref='imgs')
+
+class Uploads(Base):
+    __tablename__ = 'uploads'
+    id = Column(Integer, primary_key=True)
+    media_file = Column(String(255))
+    review_id = Column(Integer, ForeignKey('reviews.id'))
     address_id = Column(Integer, ForeignKey('address.id'))
 
 class Maps(Base):
